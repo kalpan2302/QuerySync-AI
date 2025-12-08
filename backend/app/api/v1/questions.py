@@ -81,6 +81,18 @@ async def create_new_question(
 
     # If question was marked as urgent/escalated on creation, send email to admins
     if question_data.is_escalated:
+        # Broadcast urgent notification to all connected clients (for admin popup)
+        await manager.broadcast(
+            "urgent_question",
+            {
+                "question_id": question.id,
+                "guest_name": question.guest_name or "Anonymous",
+                "message": question.message[:100] + ("..." if len(question.message) > 100 else ""),
+                "created_at": question_out.created_at.isoformat(),
+            }
+        )
+
+        # Send email notification in background
         admin_emails = await get_all_admin_emails(db)
         background_tasks.add_task(
             notify_question_escalated,

@@ -10,7 +10,8 @@ export type WebSocketEventType =
     | 'new_question'
     | 'new_answer'
     | 'status_change'
-    | 'suggestion';
+    | 'suggestion'
+    | 'urgent_question';
 
 export interface WebSocketMessage {
     type: WebSocketEventType;

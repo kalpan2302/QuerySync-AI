@@ -7,6 +7,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Question, api } from '@/lib/api';
 import { wsClient } from '@/lib/ws';
+import { isAdmin } from '@/lib/auth';
+import { addToast } from './Toast';
 import QuestionCard from './QuestionCard';
 
 export default function QuestionList() {
@@ -79,11 +81,31 @@ export default function QuestionList() {
             );
         });
 
+        // Handle urgent question notifications for admins
+        const unsubUrgentQuestion = wsClient.on('urgent_question', (data) => {
+            const { guest_name, message, question_id } = data as {
+                question_id: number;
+                guest_name: string;
+                message: string;
+                created_at: string;
+            };
+
+            // Only show popup to admins
+            if (isAdmin()) {
+                addToast({
+                    type: 'urgent',
+                    title: `🚨 Urgent Question from ${guest_name}`,
+                    message: `"${message}" - Please resolve ASAP! (Question #${question_id})`,
+                });
+            }
+        });
+
         // Cleanup
         return () => {
             unsubNewQuestion();
             unsubStatusChange();
             unsubNewAnswer();
+            unsubUrgentQuestion();
             wsClient.disconnect();
         };
     }, [loadQuestions, sortQuestions]);
