@@ -5,6 +5,7 @@
  */
 
 import { useState } from 'react';
+import ReactMarkdown from 'react-markdown';
 import { Question, Answer, api } from '@/lib/api';
 import { isAdmin } from '@/lib/auth';
 import StatusBadge from './StatusBadge';
@@ -89,11 +90,13 @@ export default function QuestionCard({ question, answers: initialAnswers }: Ques
 
                 {/* AI Suggestion */}
                 {suggestion && (
-                    <div className="mt-4 p-3 bg-purple-50 dark:bg-purple-900/30 rounded-lg border border-purple-200 dark:border-purple-800">
-                        <p className="text-xs font-medium text-purple-600 dark:text-purple-400 mb-1">
+                    <div className="mt-4 p-4 bg-purple-50 dark:bg-purple-900/30 rounded-lg border border-purple-200 dark:border-purple-800">
+                        <p className="text-xs font-medium text-purple-600 dark:text-purple-400 mb-2">
                             ✨ AI Suggested Answer:
                         </p>
-                        <p className="text-sm text-gray-700 dark:text-gray-300">{suggestion}</p>
+                        <div className="prose prose-sm dark:prose-invert max-w-none text-gray-700 dark:text-gray-300">
+                            <ReactMarkdown>{suggestion}</ReactMarkdown>
+                        </div>
                     </div>
                 )}
 

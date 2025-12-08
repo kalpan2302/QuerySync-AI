@@ -4,7 +4,7 @@
  * Forum / Q&A Dashboard page
  */
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import QuestionForm from '@/components/QuestionForm';
 import QuestionList from '@/components/QuestionList';
@@ -30,17 +30,14 @@ function getInitialAuthState(): AuthState {
 }
 
 export default function ForumPage() {
-    const [authState, setAuthState] = useState<AuthState>({
-        isLoggedIn: false,
-        userIsAdmin: false,
-        username: null,
+    // Use lazy initial state to avoid useEffect setState entirely
+    const [authState, setAuthState] = useState<AuthState>(() => {
+        // Only runs on client side
+        if (typeof window === 'undefined') {
+            return { isLoggedIn: false, userIsAdmin: false, username: null };
+        }
+        return getInitialAuthState();
     });
-    const [mounted, setMounted] = useState(false);
-
-    useEffect(() => {
-        setMounted(true);
-        setAuthState(getInitialAuthState());
-    }, []);
 
     const handleLogout = () => {
         logout();

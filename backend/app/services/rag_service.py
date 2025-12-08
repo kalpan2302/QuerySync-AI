@@ -16,18 +16,20 @@ async def get_suggested_answer(
 ) -> Optional[str]:
     """
     Generate a suggested answer using LangChain and Groq API.
-    
+
     Args:
         question_message: The question to answer
         previous_answers: List of previous answers for context
         context: Optional additional context
-    
+
     Returns:
         Suggested answer string or None if failed
     """
     if not settings.GROQ_API_KEY:
-        logger.info("GROQ_API_KEY not configured, skipping RAG suggestion")
+        logger.warning("GROQ_API_KEY not configured, skipping RAG suggestion")
         return None
+
+    logger.info(f"Attempting RAG suggestion with API key: {settings.GROQ_API_KEY[:10]}...")
 
     try:
         from langchain_core.prompts import ChatPromptTemplate
@@ -36,7 +38,7 @@ async def get_suggested_answer(
         # Initialize Groq LLM
         llm = ChatGroq(
             api_key=settings.GROQ_API_KEY,
-            model_name="llama-3.1-70b-versatile",
+            model_name="openai/gpt-oss-20b",
             temperature=0.7,
             max_tokens=500,
         )
@@ -74,12 +76,12 @@ Please provide a helpful answer to this question:"""
         })
 
         suggested = response.content.strip()
-        logger.info(f"Generated RAG suggestion for question: {question_message[:50]}...")
+        logger.info("Generated RAG suggestion successfully")
         return suggested
 
     except ImportError as e:
         logger.error(f"LangChain/Groq not properly installed: {e}")
         return None
     except Exception as e:
-        logger.error(f"Failed to generate RAG suggestion: {e}")
+        logger.error(f"Failed to generate RAG suggestion: {type(e).__name__}: {e}")
         return None
