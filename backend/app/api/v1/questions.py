@@ -41,14 +41,14 @@ async def list_questions(
     Ordered by: ESCALATED first, then by created_at (newest first).
     """
     questions = await get_questions(db, limit=limit, offset=offset, status=status)
-    
+
     # Add answers count to response
     result = []
     for q in questions:
         question_out = QuestionOut.model_validate(q)
         question_out.answers_count = len(q.answers)
         result.append(question_out)
-    
+
     return result
 
 

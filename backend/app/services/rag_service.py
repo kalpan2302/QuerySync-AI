@@ -16,12 +16,12 @@ async def get_suggested_answer(
 ) -> Optional[str]:
     """
     Generate a suggested answer using LangChain and Groq API.
-    
+
     Args:
         question_message: The question to answer
         previous_answers: List of previous answers for context
         context: Optional additional context
-    
+
     Returns:
         Suggested answer string or None if failed
     """
@@ -76,7 +76,7 @@ Please provide a helpful answer to this question:"""
         })
 
         suggested = response.content.strip()
-        logger.info(f"Generated RAG suggestion successfully")
+        logger.info("Generated RAG suggestion successfully")
         return suggested
 
     except ImportError as e:

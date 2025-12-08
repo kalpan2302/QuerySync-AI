@@ -33,7 +33,7 @@ class ConnectionManager:
             "type": event_type,
             "data": data,
         })
-        
+
         disconnected = []
         for connection in self.active_connections:
             try:
@@ -41,7 +41,7 @@ class ConnectionManager:
             except Exception as e:
                 logger.warning(f"Failed to send to connection: {e}")
                 disconnected.append(connection)
-        
+
         # Clean up disconnected connections
         for connection in disconnected:
             self.disconnect(connection)

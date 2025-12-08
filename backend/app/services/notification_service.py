@@ -1,7 +1,6 @@
 """Notification service for webhooks and email."""
 
 import logging
-from typing import Optional
 
 import httpx
 from aiosmtplib import SMTP
