@@ -1,5 +1,6 @@
 """Authentication API routes."""
 
+from pydantic import BaseModel, EmailStr
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -12,8 +13,60 @@ from app.services.auth_service import (
     get_user_by_email,
     get_user_by_username,
 )
+from app.services.otp_service import (
+    send_otp,
+    verify_otp,
+    is_email_verified,
+    clear_otp,
+)
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
+
+
+class OTPRequest(BaseModel):
+    """Request schema for OTP."""
+    email: EmailStr
+
+
+class OTPVerify(BaseModel):
+    """Request schema for OTP verification."""
+    email: EmailStr
+    otp: str
+
+
+class OTPResponse(BaseModel):
+    """Response schema for OTP operations."""
+    success: bool
+    message: str
+
+
+@router.post("/send-otp", response_model=OTPResponse)
+async def request_otp(request: OTPRequest):
+    """Send OTP to email for registration verification."""
+    success = await send_otp(request.email)
+    if success:
+        return OTPResponse(
+            success=True,
+            message=f"OTP sent to {request.email}. Please check your inbox."
+        )
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to send OTP. Please check email configuration."
+        )
+
+
+@router.post("/verify-otp", response_model=OTPResponse)
+async def verify_email_otp(request: OTPVerify):
+    """Verify OTP for email verification."""
+    success, message = verify_otp(request.email, request.otp)
+    if success:
+        return OTPResponse(success=True, message=message)
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=message
+        )
 
 
 @router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)
@@ -21,7 +74,14 @@ async def register(
     user_data: UserCreate,
     db: AsyncSession = Depends(get_db),
 ):
-    """Register a new admin user."""
+    """Register a new admin user. Requires OTP verification first."""
+    # Check if email has been verified with OTP
+    if not is_email_verified(user_data.email):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email not verified. Please verify your email with OTP first."
+        )
+
     # Check if email already exists
     existing_email = await get_user_by_email(db, user_data.email)
     if existing_email:
@@ -39,6 +99,10 @@ async def register(
         )
 
     user = await create_user(db, user_data)
+
+    # Clear OTP data after successful registration
+    clear_otp(user_data.email)
+
     return user
 
 
