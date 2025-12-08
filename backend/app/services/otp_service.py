@@ -2,9 +2,7 @@
 
 import logging
 import random
-import secrets
 from datetime import datetime, timedelta
-from typing import Optional
 
 from app.services.notification_service import send_email_notification
 

@@ -168,4 +168,3 @@ Please review this question in the QuerySync dashboard as soon as possible.
 """
     await send_email_notification(admin_emails, subject, body)
     logger.info(f"Escalation notification sent for question #{question_id}")
-
