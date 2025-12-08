@@ -34,7 +34,7 @@ class Question(Base):
     guest_name: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     message: Mapped[str] = mapped_column(Text, nullable=False)
     status: Mapped[QuestionStatus] = mapped_column(
-        Enum(QuestionStatus), default=QuestionStatus.PENDING, server_default="PENDING"
+        Enum(QuestionStatus, name="questionstatus", create_constraint=True), default=QuestionStatus.PENDING
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
