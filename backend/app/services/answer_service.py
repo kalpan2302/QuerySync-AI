@@ -15,12 +15,15 @@ async def create_answer(
     answer_data: AnswerCreate,
     user_id: Optional[int] = None,
 ) -> Answer:
-    """Create a new answer for a question."""
+    """Create a new answer for a question (supports threading via parent_id)."""
     answer = Answer(
         question_id=question_id,
         user_id=user_id,
+        parent_id=answer_data.parent_id,  # For threading
         guest_name=answer_data.guest_name if not user_id else None,
         message=answer_data.message,
+        upvotes=0,
+        downvotes=0,
     )
     db.add(answer)
     await db.commit()
