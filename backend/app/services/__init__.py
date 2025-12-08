@@ -9,7 +9,10 @@ from app.services.auth_service import (
     get_user_by_id,
     get_user_by_username,
 )
-from app.services.notification_service import notify_question_answered
+from app.services.notification_service import (
+    notify_question_answered,
+    notify_question_escalated,
+)
 from app.services.question_service import (
     create_question,
     get_question_by_id,
@@ -34,5 +37,6 @@ __all__ = [
     "create_answer",
     "get_answers_for_question",
     "notify_question_answered",
+    "notify_question_escalated",
     "get_suggested_answer",
 ]

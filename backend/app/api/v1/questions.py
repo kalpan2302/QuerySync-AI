@@ -22,6 +22,7 @@ from app.services import (
     get_questions,
     get_suggested_answer,
     notify_question_answered,
+    notify_question_escalated,
     update_question_status,
 )
 from app.websocket import manager
@@ -134,6 +135,18 @@ async def change_question_status(
             question_message=question.message,
             answered_at=question_out.answered_at.isoformat() if question_out.answered_at else "",
             answers_count=len(question.answers),
+            admin_emails=admin_emails,
+        )
+
+    # If escalated, send escalation notifications in background
+    if status_update.status == QuestionStatus.ESCALATED:
+        admin_emails = await get_all_admin_emails(db)
+        background_tasks.add_task(
+            notify_question_escalated,
+            question_id=question_id,
+            question_message=question.message,
+            guest_name=question.guest_name or "Admin",
+            escalated_at=question_out.escalated_at.isoformat() if question_out.escalated_at else "",
             admin_emails=admin_emails,
         )
 
