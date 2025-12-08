@@ -21,16 +21,11 @@ services:
   backend:
     build: ./backend
     container_name: querysync-backend
+    env_file:
+      - ./backend/.env
     environment:
       - DATABASE_URL=postgresql+asyncpg://hemut:password@db:5432/querysync
-      - JWT_SECRET=${JWT_SECRET:-super-secret-jwt-key-change-me}
       - ALLOWED_ORIGINS=http://localhost:3000,http://frontend:3000
-      - GROQ_API_KEY=${GROQ_API_KEY:-}
-      - SMTP_HOST=${SMTP_HOST:-}
-      - SMTP_PORT=${SMTP_PORT:-587}
-      - SMTP_USER=${SMTP_USER:-}
-      - SMTP_PASSWORD=${SMTP_PASSWORD:-}
-      - WEBHOOK_URL=${WEBHOOK_URL:-}
     depends_on:
       db:
         condition: service_healthy
