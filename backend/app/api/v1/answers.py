@@ -5,7 +5,6 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from app.api.deps import get_current_user_optional, get_current_admin
 from app.db import get_db
@@ -203,4 +202,3 @@ async def rate_answer(
         downvotes=answer.downvotes,
         score=answer.upvotes - answer.downvotes,
     )
-
