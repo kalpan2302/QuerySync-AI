@@ -9,6 +9,7 @@ import Link from 'next/link';
 import QuestionForm from '@/components/QuestionForm';
 import QuestionList from '@/components/QuestionList';
 import AnalyticsDashboard from '@/components/AnalyticsDashboard';
+import ToastContainer from '@/components/Toast';
 import { isAuthenticated, isAdmin, logout, getUser } from '@/lib/auth';
 
 interface AuthState {
@@ -50,6 +51,9 @@ export default function ForumPage() {
 
     return (
         <div className="min-h-screen">
+            {/* Toast notifications for urgent questions */}
+            <ToastContainer />
+
             {/* Header */}
             <header className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 shadow-lg">
                 <div className="max-w-5xl mx-auto px-4 py-6">
