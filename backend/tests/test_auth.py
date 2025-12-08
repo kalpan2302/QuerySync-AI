@@ -3,10 +3,30 @@
 import pytest
 from httpx import AsyncClient
 
+from app.services.otp_service import _otp_storage
+
+
+def mock_email_verified(email: str):
+    """Helper to mock email verification for tests."""
+    _otp_storage[email] = {
+        "otp": "1234",
+        "expires_at": None,
+        "verified": True,
+    }
+
+
+def clear_otp_storage():
+    """Clear OTP storage between tests."""
+    _otp_storage.clear()
+
 
 @pytest.mark.asyncio
 async def test_register_user(client: AsyncClient):
-    """Test user registration."""
+    """Test user registration with verified email."""
+    clear_otp_storage()
+    # Mock email verification
+    mock_email_verified("admin@test.com")
+
     response = await client.post(
         "/api/v1/auth/register",
         json={
@@ -24,9 +44,28 @@ async def test_register_user(client: AsyncClient):
 
 
 @pytest.mark.asyncio
+async def test_register_without_otp(client: AsyncClient):
+    """Test that registration without OTP verification fails."""
+    clear_otp_storage()
+    response = await client.post(
+        "/api/v1/auth/register",
+        json={
+            "username": "testuser",
+            "email": "nootp@test.com",
+            "password": "password123",
+        },
+    )
+    assert response.status_code == 400
+    assert "Email not verified" in response.json()["detail"]
+
+
+@pytest.mark.asyncio
 async def test_register_duplicate_email(client: AsyncClient):
     """Test that duplicate emails are rejected."""
-    # First registration
+    clear_otp_storage()
+
+    # First registration with verified email
+    mock_email_verified("duplicate@test.com")
     await client.post(
         "/api/v1/auth/register",
         json={
@@ -36,7 +75,8 @@ async def test_register_duplicate_email(client: AsyncClient):
         },
     )
 
-    # Second registration with same email
+    # Second registration with same email (re-verify for the test)
+    mock_email_verified("duplicate@test.com")
     response = await client.post(
         "/api/v1/auth/register",
         json={
@@ -52,7 +92,10 @@ async def test_register_duplicate_email(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_login_success(client: AsyncClient):
     """Test successful login."""
-    # Register first
+    clear_otp_storage()
+
+    # Register first with verified email
+    mock_email_verified("login@test.com")
     await client.post(
         "/api/v1/auth/register",
         json={

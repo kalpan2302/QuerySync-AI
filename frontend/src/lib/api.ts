@@ -139,6 +139,19 @@ export interface Stats {
 
 // API functions
 export const api = {
+    // Auth - OTP
+    sendOtp: (email: string) =>
+        apiRequest<{ success: boolean; message: string }>('/api/v1/auth/send-otp', {
+            method: 'POST',
+            body: { email },
+        }),
+
+    verifyOtp: (email: string, otp: string) =>
+        apiRequest<{ success: boolean; message: string }>('/api/v1/auth/verify-otp', {
+            method: 'POST',
+            body: { email, otp },
+        }),
+
     // Auth
     register: (data: { username: string; email: string; password: string }) =>
         apiRequest<User>('/api/v1/auth/register', { method: 'POST', body: data }),
