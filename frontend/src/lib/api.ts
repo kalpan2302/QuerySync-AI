@@ -123,9 +123,14 @@ export interface Answer {
     id: number;
     question_id: number;
     user_id: number | null;
+    parent_id: number | null;
     guest_name: string | null;
     message: string;
     created_at: string;
+    upvotes: number;
+    downvotes: number;
+    score: number;
+    replies: Answer[];
 }
 
 export interface Stats {
@@ -182,11 +187,17 @@ export const api = {
         ),
 
     // Answers
-    createAnswer: (questionId: number, data: { message: string; guest_name?: string }) =>
+    createAnswer: (questionId: number, data: { message: string; guest_name?: string; parent_id?: number }) =>
         apiRequest<Answer>(`/api/v1/questions/${questionId}/answers`, {
             method: 'POST',
             body: data,
         }),
+
+    rateAnswer: (questionId: number, answerId: number, vote: 'up' | 'down') =>
+        apiRequest<{ answer_id: number; upvotes: number; downvotes: number; score: number }>(
+            `/api/v1/questions/${questionId}/answers/${answerId}/rate`,
+            { method: 'POST', body: { vote } }
+        ),
 
     // Admin
     getStats: () => apiRequest<Stats>('/api/v1/admin/stats'),

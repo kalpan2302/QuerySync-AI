@@ -126,7 +126,7 @@ export default function QuestionCard({ question, answers: initialAnswers }: Ques
                             <p className="text-sm text-gray-500 dark:text-gray-400">Loading answers...</p>
                         ) : (
                             <>
-                                <AnswerList answers={answers} />
+                                <AnswerList answers={answers} questionId={question.id} />
                                 <AnswerForm
                                     questionId={question.id}
                                     onAnswerCreated={() => loadAnswers()}

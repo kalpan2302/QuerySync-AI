@@ -111,14 +111,51 @@ async def get_question(
     question_id: int,
     db: AsyncSession = Depends(get_db),
 ):
-    """Get a specific question with its answers."""
+    """Get a specific question with its answers (with nested replies)."""
     question = await get_question_by_id(db, question_id)
     if not question:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Question not found",
         )
-    return question
+
+    # Build nested answer tree from flat list
+    def build_answer_tree(answers, parent_id=None):
+        result = []
+        for answer in answers:
+            if answer.parent_id == parent_id:
+                answer_dict = {
+                    "id": answer.id,
+                    "question_id": answer.question_id,
+                    "user_id": answer.user_id,
+                    "parent_id": answer.parent_id,
+                    "guest_name": answer.guest_name,
+                    "message": answer.message,
+                    "created_at": answer.created_at,
+                    "upvotes": answer.upvotes,
+                    "downvotes": answer.downvotes,
+                    "score": answer.upvotes - answer.downvotes,
+                    "replies": build_answer_tree(answers, answer.id),
+                }
+                result.append(answer_dict)
+        return result
+
+    # Build the response with nested answers
+    nested_answers = build_answer_tree(question.answers)
+
+    return {
+        "id": question.id,
+        "user_id": question.user_id,
+        "guest_name": question.guest_name,
+        "message": question.message,
+        "status": question.status,
+        "created_at": question.created_at,
+        "updated_at": question.updated_at,
+        "escalated_at": question.escalated_at,
+        "answered_at": question.answered_at,
+        "answers_count": len(question.answers),
+        "answers": nested_answers,
+    }
 
 
 @router.patch("/{question_id}/status", response_model=QuestionOut)
