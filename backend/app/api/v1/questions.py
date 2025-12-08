@@ -56,6 +56,7 @@ async def list_questions(
 @router.post("", response_model=QuestionOut, status_code=status.HTTP_201_CREATED)
 async def create_new_question(
     question_data: QuestionCreate,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
     current_user: Optional[User] = Depends(get_current_user_optional),
 ):
@@ -77,6 +78,18 @@ async def create_new_question(
     question_out = QuestionOut.model_validate(question)
     question_out.answers_count = 0
     await manager.broadcast("new_question", question_out.model_dump(mode="json"))
+
+    # If question was marked as urgent/escalated on creation, send email to admins
+    if question_data.is_escalated:
+        admin_emails = await get_all_admin_emails(db)
+        background_tasks.add_task(
+            notify_question_escalated,
+            question_id=question.id,
+            question_message=question.message,
+            guest_name=question.guest_name or "Anonymous",
+            escalated_at=question_out.escalated_at.isoformat() if question_out.escalated_at else question_out.created_at.isoformat(),
+            admin_emails=admin_emails,
+        )
 
     return question_out
 
