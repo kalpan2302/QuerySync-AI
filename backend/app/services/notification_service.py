@@ -52,44 +52,64 @@ async def send_email_notification(
     subject: str,
     body: str,
 ) -> bool:
-    """Send email notification to admins."""
+    """Send email notification using Resend API (preferred) or SMTP (fallback)."""
     logger.info(f"Attempting to send email: subject='{subject}', recipients={to_emails}")
-
-    if not settings.SMTP_USER or not settings.SMTP_PASSWORD:
-        logger.warning("SMTP not configured, skipping email notification")
-        return False
 
     if not to_emails:
         logger.warning("No recipient emails provided, skipping email")
         return False
 
-    try:
-        from email.mime.text import MIMEText
+    # Try Resend API first (works on cloud platforms like Render)
+    if settings.RESEND_API_KEY:
+        try:
+            import resend
+            resend.api_key = settings.RESEND_API_KEY
 
-        smtp = SMTP(
-            hostname=settings.SMTP_HOST,
-            port=settings.SMTP_PORT,
-            use_tls=False,
-            start_tls=True,
-        )
+            for email_addr in to_emails:
+                resend.Emails.send({
+                    "from": settings.EMAIL_FROM,
+                    "to": email_addr,
+                    "subject": subject,
+                    "text": body,
+                })
 
-        await smtp.connect()
-        await smtp.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
+            logger.info(f"Email sent via Resend to {len(to_emails)} recipients")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to send email via Resend: {e}")
+            # Fall through to SMTP
 
-        for email_addr in to_emails:
-            # Use MIMEText for proper UTF-8 encoding (supports emojis)
-            msg = MIMEText(body, 'plain', 'utf-8')
-            msg['From'] = settings.EMAIL_FROM
-            msg['To'] = email_addr
-            msg['Subject'] = subject
-            await smtp.sendmail(settings.EMAIL_FROM, email_addr, msg.as_string())
+    # Fallback to SMTP (works locally or on VPS)
+    if settings.SMTP_USER and settings.SMTP_PASSWORD:
+        try:
+            from email.mime.text import MIMEText
 
-        await smtp.quit()
-        logger.info(f"Email sent to {len(to_emails)} recipients")
-        return True
-    except Exception as e:
-        logger.error(f"Failed to send email: {e}")
-        return False
+            smtp = SMTP(
+                hostname=settings.SMTP_HOST,
+                port=settings.SMTP_PORT,
+                use_tls=False,
+                start_tls=True,
+            )
+
+            await smtp.connect()
+            await smtp.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
+
+            for email_addr in to_emails:
+                msg = MIMEText(body, 'plain', 'utf-8')
+                msg['From'] = settings.EMAIL_FROM
+                msg['To'] = email_addr
+                msg['Subject'] = subject
+                await smtp.sendmail(settings.EMAIL_FROM, email_addr, msg.as_string())
+
+            await smtp.quit()
+            logger.info(f"Email sent via SMTP to {len(to_emails)} recipients")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to send email via SMTP: {e}")
+            return False
+
+    logger.warning("No email service configured (set RESEND_API_KEY or SMTP credentials)")
+    return False
 
 
 async def notify_question_answered(
