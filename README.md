@@ -311,10 +311,5 @@ The application is currently deployed on Render:
 
 ---
 
-## 📄 License
 
-This project is built for the Hemut Take-Home Project.
-
----
-
-Built with ❤️ by [Kalpan](https://github.com/Kalpan2007)
+Built with ❤️ by [Kalpan](https://github.com/Kalpan2302)
