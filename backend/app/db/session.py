@@ -7,9 +7,17 @@ from app.core.config import get_settings
 
 settings = get_settings()
 
+# Fix DATABASE_URL for async SQLAlchemy
+# Render provides postgres:// but SQLAlchemy async needs postgresql+asyncpg://
+database_url = settings.DATABASE_URL
+if database_url.startswith("postgres://"):
+    database_url = database_url.replace("postgres://", "postgresql+asyncpg://", 1)
+elif database_url.startswith("postgresql://"):
+    database_url = database_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+
 # Create async engine
 engine = create_async_engine(
-    settings.DATABASE_URL,
+    database_url,
     echo=False,
     future=True,
 )
